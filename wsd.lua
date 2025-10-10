@@ -1,3 +1,4 @@
+
 if not (game:IsLoaded()) then game.Loaded:Wait(); end;
 local OrionLib = loadstring(game:HttpGet(("https://raw.githubusercontent.com/Giangplay/Script/main/Orion_Library_PE_V2.lua")))()
 OrionLib:MakeNotification({
@@ -64,6 +65,9 @@ Tab:AddButton({
     Name = "rejoin server",
     Callback = function()
         game.Players.LocalPlayer:Kick("rejoining")
+        queue_on_teleport[[
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xectray1/realloader/refs/heads/main/books.lua"))()
+        ]]
         wait()
         cloneref(game:GetService("TeleportService")):Teleport(game.PlaceId, game.Players.LocalPlayer);
     end;
@@ -721,4 +725,40 @@ Tab1:AddSlider({
     Callback = function(value)
         WalkSpeedMultiplier = value
     end,
+})
+local DadDied = false
+local ChaseDoorBool = Workspace:WaitForChild("Game"):WaitForChild("dad"):WaitForChild("PossesedDad"):WaitForChild("ChaseDoor")
+local PossessedDad = ChaseDoorBool.Parent
+ChaseDoorBool.Changed:Connect(function(newValue)
+	if newValue == true then
+		local humanoid = PossessedDad:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Health = 0
+		end
+	end
+end)
+if ChaseDoorBool.Value == true then
+	local humanoid = PossessedDad:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+	end
+end
+local function GodmodeDad()
+	if DadDied then return end
+	DadDied = true
+	task.spawn(function()
+		local humanoid = PossessedDad:WaitForChild("Humanoid")
+		while DadDied and humanoid and humanoid.Parent do
+			humanoid.Health = 100
+			task.wait(0.5)
+			humanoid.Health = 0
+			task.wait(0.5)
+		end
+	end)
+end
+Tab1:AddButton({
+    Name = "godmode",
+    Callback = function()
+        GodmodeDad()
+    end
 })
