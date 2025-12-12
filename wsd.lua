@@ -1,4 +1,3 @@
-
 if not (game:IsLoaded()) then game.Loaded:Wait(); end;
 local OrionLib = loadstring(game:HttpGet(("https://raw.githubusercontent.com/Giangplay/Script/main/Orion_Library_PE_V2.lua")))()
 OrionLib:MakeNotification({
@@ -726,6 +725,76 @@ Tab1:AddSlider({
         WalkSpeedMultiplier = value
     end,
 })
+Tab1:AddToggle({
+    Name = "void desync",
+    Default = false,
+    Callback = function(value)
+        is_enabled = value;
+    end;
+});
+(getgenv()).clientcframe = (getgenv()).clientcframe or { Connections = {}, History = {} };
+local data = (getgenv()).clientcframe
+for _, conn in pairs(data.Connections) do
+    if conn.Connected then conn:Disconnect(); end;
+end;
+data.Connections = {};
+data.History = {};
+local runservice = game:GetService("RunService");
+local uis = cloneref(game:GetService("UserInputService"));
+local localplayer = game:GetService("Players").LocalPlayer;
+local character = localplayer.Character or localplayer.CharacterAdded:Wait();
+local primarypart = character:WaitForChild("HumanoidRootPart");
+local client_cframe = primarypart.CFrame;
+local function add_to_history()
+    if primarypart and primarypart.Parent then
+        local realpos = primarypart.Position;
+        table.insert(data.History, realpos);
+        if #data.History > 50 then
+            table.remove(data.History, 1);
+        end;
+    end;
+end;
+if not data.IndexHook then
+    local __index; __index = hookmetamethod(game, "__index", newcclosure(function(self, property)
+        if not checkcaller() and self == primarypart and property == "CFrame" then
+            return client_cframe;
+        end;
+        return __index(self, property);
+    end));
+    data.IndexHook = true;
+end;
+table.insert(data.Connections, localplayer.CharacterAdded:Connect(function(newchar)
+    character = newchar;
+    primarypart = newchar:WaitForChild("HumanoidRootPart");
+    humanoid = newchar:WaitForChild("Humanoid");
+    client_cframe = primarypart.CFrame;
+    data.History  = {};
+    task.wait(1);
+end));
+local function targetcframe()
+    if not primarypart then return client_cframe; end;
+    local basePos = primarypart.Position;
+    local X = math.random(-500, 500)
+    local Y = 500
+    local Z = math.random(-500, 500)
+    return CFrame.new(X, Y, Z);
+end;
+table.insert(data.Connections, runservice.Heartbeat:Connect(function()
+    if not (primarypart and primarypart.Parent) then return; end;
+    client_cframe = primarypart.CFrame;
+    if tick() % 0.2 < 0.03 then
+        add_to_history();
+    end;
+    local humanoid = localplayer.Character:WaitForChild("Humanoid");
+    if is_enabled and isnetworkowner(primarypart) then
+        local target = targetcframe();
+        primarypart.CFrame = target;
+    else
+        primarypart.CFrame = client_cframe;
+    end;
+    runservice.RenderStepped:Wait();
+    primarypart.CFrame = client_cframe;
+end));
 local DadDied = false
 local ChaseDoorBool = Workspace:WaitForChild("Game"):WaitForChild("dad"):WaitForChild("PossesedDad"):WaitForChild("ChaseDoor")
 local PossessedDad = ChaseDoorBool.Parent
